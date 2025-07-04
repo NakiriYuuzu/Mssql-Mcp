@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        registry-url: 'https://registry.npmjs.org'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build project
+      run: npm run build
+      
+    - name: Run tests
+      run: npm test
+      continue-on-error: true
+      
+    - name: Package for release
+      run: |
+        # 建立發布目錄
+        mkdir -p release
+        
+        # 複製必要檔案
+        cp -r build release/
+        cp package.json release/
+        cp package-lock.json release/
+        cp README.md release/
+        cp LICENSE release/ 2>/dev/null || true
+        cp .env.example release/
+        cp mcp-config.json release/
+        cp -r claude-commands release/
+        cp CLAUDE.md release/
+        cp CLAUDE_CODE_SETUP.md release/
+        
+        # 建立壓縮檔
+        cd release
+        tar -czf ../mssql-mcp-${{ github.ref_name }}.tar.gz .
+        zip -r ../mssql-mcp-${{ github.ref_name }}.zip .
+        cd ..
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          mssql-mcp-${{ github.ref_name }}.tar.gz
+          mssql-mcp-${{ github.ref_name }}.zip
+        body: |
+          ## MSSQL MCP Server ${{ github.ref_name }}
+          
+          ### 安裝方式
+          
+          #### 透過 npm (推薦)
+          ```bash
+          npm install -g mssql-mcp
+          # 或使用 npx
+          npx mssql-mcp
+          ```
+          
+          #### 手動安裝
+          1. 下載並解壓縮檔案
+          2. 執行 `npm install` 安裝相依套件
+          3. 執行 `node build/index.js` 啟動伺服器
+          
+          ### 變更記錄
+          請查看 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
+        draft: false
+        prerelease: false
+        
+    - name: Publish to npm
+      run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

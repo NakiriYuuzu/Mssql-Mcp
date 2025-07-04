@@ -12,11 +12,23 @@
     "dev": "tsc && node build/index.js",
     "start": "node build/index.js",
     "test": "node test-server.js",
-    "clean": "rm -rf build"
+    "clean": "rm -rf build",
+    "prepublishOnly": "npm run clean && npm run build"
   },
-  "keywords": ["mcp", "mssql", "database", "sql-server"],
-  "author": "Your Name",
+  "keywords": ["mcp", "mssql", "database", "sql-server", "model-context-protocol"],
+  "author": "Yuuzu",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nakiriyuuzu/mssql-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nakiriyuuzu/mssql-mcp/issues"
+  },
+  "homepage": "https://github.com/nakiriyuuzu/mssql-mcp#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "mssql": "^11.0.1",
@@ -27,5 +39,13 @@
     "@types/mssql": "^9.1.5",
     "typescript": "^5.3.3"
   },
-  "files": ["build"]
+  "files": [
+    "build",
+    "claude-commands",
+    "CLAUDE.md",
+    "CLAUDE_CODE_SETUP.md",
+    "README.md",
+    "mcp-config.json",
+    ".env.example"
+  ]
 }

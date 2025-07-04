@@ -34,7 +34,7 @@
   "mcpServers": {
     "mssql": {
       "command": "node",
-      "args": ["/Users/yuuzu/HanaokaYuuzu/MLearning/Mcp/Mssql-Mcp/build/index.js"]
+      "args": ["/build/index.js"]
     }
   }
 }
@@ -44,7 +44,7 @@
 
 ```bash
 # 在專案目錄中啟動
-cd /Users/yuuzu/HanaokaYuuzu/MLearning/Mcp/Mssql-Mcp
+cd your-path
 claude
 
 # 或從任何地方啟動（如果使用全域設定）
