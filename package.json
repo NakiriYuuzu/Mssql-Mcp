@@ -1,5 +1,5 @@
 {
-  "name": "@nakiriyuuzu/mssql-mcp",
+  "name": "@yuuzu/mssql-mcp",
   "version": "1.0.0",
   "description": "MSSQL MCP Server for database operations",
   "type": "module",
