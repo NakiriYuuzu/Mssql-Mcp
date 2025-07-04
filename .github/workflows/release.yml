@@ -69,9 +69,9 @@ jobs:
           
           #### 透過 npm (推薦)
           ```bash
-          npm install -g mssql-mcp
+          npm install -g @nakiriyuuzu/mssql-mcp
           # 或使用 npx
-          npx mssql-mcp
+          npx @nakiriyuuzu/mssql-mcp
           ```
           
           #### 手動安裝
@@ -85,6 +85,6 @@ jobs:
         prerelease: false
         
     - name: Publish to npm
-      run: npm publish
+      run: npm publish --access public
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
