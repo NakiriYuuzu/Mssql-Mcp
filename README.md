@@ -2,6 +2,10 @@
 
 這是一個 Model Context Protocol (MCP) 伺服器，提供與 Microsoft SQL Server 資料庫互動的功能。支援資料庫連接、切換、查詢等操作。
 
+<a href="https://glama.ai/mcp/servers/@NakiriYuuzu/Mssql-Mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@NakiriYuuzu/Mssql-Mcp/badge" alt="MSSQL Server MCP server" />
+</a>
+
 ## 功能特色
 
 - 🔌 **彈性連接**: 支援多種 MSSQL 連接配置
