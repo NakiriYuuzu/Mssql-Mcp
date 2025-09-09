@@ -45,7 +45,7 @@ export function formatResultAsTable(data: any[], maxRows: number = 100): string 
 }
 
 /**
- * 驗證 SQL 查詢是否安全（僅限讀取操作）
+ * 驗證 SQL 查詢是否安全（根據權限設定）
  */
 export function validateReadOnlyQuery(query: string): { isValid: boolean; reason?: string } {
   const trimmedQuery = query.trim().toLowerCase()
@@ -55,38 +55,76 @@ export function validateReadOnlyQuery(query: string): { isValid: boolean; reason
     return { isValid: false, reason: '查詢語句不能為空' }
   }
 
-  // 危險關鍵字檢查
-  const dangerousKeywords = [
-    'drop', 'delete', 'truncate', 'alter', 'create', 
-    'insert', 'update', 'merge', 'replace', 'rename',
-    'grant', 'revoke', 'deny', 'execute', 'exec',
-    'sp_', 'xp_', 'backup', 'restore'
-  ]
-
-  for (const keyword of dangerousKeywords) {
-    const pattern = new RegExp(`\\b${keyword}\\b`, 'i')
-    if (pattern.test(trimmedQuery)) {
-      return { 
-        isValid: false, 
-        reason: `查詢包含危險關鍵字: ${keyword.toUpperCase()}。僅允許 SELECT 查詢。` 
-      }
-    }
-  }
-
-  // 檢查是否為 SELECT 查詢
-  if (!trimmedQuery.startsWith('select') && !trimmedQuery.startsWith('with')) {
-    return { 
-      isValid: false, 
-      reason: '僅允許 SELECT 查詢和 WITH 子句查詢' 
-    }
-  }
-
   // 檢查是否包含分號後的額外語句（防止 SQL 注入）
   const statements = query.split(';').filter(stmt => stmt.trim())
   if (statements.length > 1) {
     return { 
       isValid: false, 
       reason: '不允許執行多個 SQL 語句' 
+    }
+  }
+
+  // 檢查環境變數權限設定
+  const ALLOW_INSERT = process.env.MSSQL_ALLOW_INSERT === 'true'
+  const ALLOW_UPDATE = process.env.MSSQL_ALLOW_UPDATE === 'true'
+  const ALLOW_DELETE = process.env.MSSQL_ALLOW_DELETE === 'true'
+  const DANGER_MODE = process.env.MSSQL_DANGER_MODE === 'true'
+
+  // 如果啟用了 danger mode，允許所有操作
+  if (DANGER_MODE) {
+    process.stderr.write('[WARNING] Danger mode is enabled - allowing all SQL operations\n')
+    return { isValid: true }
+  }
+
+  // 定義永遠危險的關鍵字（即使在 danger mode 下也應該謹慎）
+  const alwaysDangerousKeywords = [
+    'drop', 'truncate', 'alter', 'create', 
+    'grant', 'revoke', 'deny', 'execute', 'exec',
+    'sp_', 'xp_', 'backup', 'restore', 'rename'
+  ]
+
+  // 定義可選權限關鍵字
+  const permissionKeywords = {
+    insert: { allowed: ALLOW_INSERT, keyword: 'insert' },
+    update: { allowed: ALLOW_UPDATE, keyword: 'update' },
+    delete: { allowed: ALLOW_DELETE, keyword: 'delete' },
+    merge: { allowed: ALLOW_INSERT && ALLOW_UPDATE, keyword: 'merge' },
+    replace: { allowed: ALLOW_INSERT && ALLOW_DELETE, keyword: 'replace' }
+  }
+
+  // 檢查永遠危險的關鍵字
+  for (const keyword of alwaysDangerousKeywords) {
+    const pattern = new RegExp(`\\b${keyword}\\b`, 'i')
+    if (pattern.test(trimmedQuery)) {
+      return { 
+        isValid: false, 
+        reason: `查詢包含高危險關鍵字: ${keyword.toUpperCase()}。此操作被禁止。` 
+      }
+    }
+  }
+
+  // 檢查需要權限的關鍵字
+  for (const [key, config] of Object.entries(permissionKeywords)) {
+    const pattern = new RegExp(`\\b${config.keyword}\\b`, 'i')
+    if (pattern.test(trimmedQuery)) {
+      if (!config.allowed) {
+        return { 
+          isValid: false, 
+          reason: `查詢包含 ${config.keyword.toUpperCase()} 操作，但未授予此權限。請設定環境變數 MSSQL_ALLOW_${key.toUpperCase()}=true 來啟用。` 
+        }
+      }
+      // 如果有權限，記錄警告
+      process.stderr.write(`[INFO] Executing ${config.keyword.toUpperCase()} operation with permission\n`)
+      return { isValid: true }
+    }
+  }
+
+  // 檢查是否為 SELECT 查詢
+  if (!trimmedQuery.startsWith('select') && !trimmedQuery.startsWith('with')) {
+    // 如果不是 SELECT 但也不包含上述關鍵字，可能是其他查詢類型
+    return { 
+      isValid: false, 
+      reason: '僅允許 SELECT 查詢、WITH 子句查詢，或已授權的 DML 操作' 
     }
   }
 

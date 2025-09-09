@@ -1,44 +1,44 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { MSSQLManager } from './database.js'
 import { DatabaseConfigSchema } from './types.js'
-import { 
-  formatResultAsTable, 
-  validateReadOnlyQuery, 
-  addTopLimit, 
+import {
+  formatResultAsTable,
+  validateReadOnlyQuery,
+  addTopLimit,
   sanitizeDatabaseName,
   sanitizeTableName,
   formatError,
-  validateConnectionConfig 
+  validateConnectionConfig
 } from './utils.js'
 
 // 建立 MCP 伺服器實例
 const server = new McpServer({
   name: 'mssql-mcp-server',
-  version: '1.0.0',
-  capabilities: {
-    tools: {},
-  },
+  version: '1.1.0'
 })
 
 // MSSQL 管理器實例
 const mssqlManager = new MSSQLManager()
 
 // 工具：連接資料庫
-server.tool(
+server.registerTool(
   'connect-database',
-  '連接到 MSSQL 資料庫伺服器',
   {
-    server: z.string().describe('MSSQL 伺服器位址'),
-    port: z.number().optional().default(1433).describe('連接埠號 (預設: 1433)'),
-    database: z.string().optional().describe('資料庫名稱 (可選)'),
-    user: z.string().describe('使用者名稱'),
-    password: z.string().describe('密碼'),
-    encrypt: z.boolean().optional().default(true).describe('是否加密連接 (預設: true)'),
-    trustServerCertificate: z.boolean().optional().default(false).describe('是否信任伺服器憑證 (預設: false)'),
+    title: '連接資料庫',
+    description: '連接到 MSSQL 資料庫伺服器',
+    inputSchema: {
+      server: z.string().describe('MSSQL 伺服器位址'),
+      port: z.number().optional().default(1433).describe('連接埠號 (預設: 1433)'),
+      database: z.string().optional().describe('資料庫名稱 (可選)'),
+      user: z.string().describe('使用者名稱'),
+      password: z.string().describe('密碼'),
+      encrypt: z.boolean().optional().default(true).describe('是否加密連接 (預設: true)'),
+      trustServerCertificate: z.boolean().optional().default(false).describe('是否信任伺服器憑證 (預設: false)'),
+    }
   },
   async ({ server, port, database, user, password, encrypt, trustServerCertificate }) => {
     try {
@@ -68,7 +68,7 @@ server.tool(
       })
 
       await mssqlManager.connect(config)
-      
+
       return {
         content: [
           {
@@ -91,10 +91,12 @@ server.tool(
 )
 
 // 工具：列出所有資料庫
-server.tool(
+server.registerTool(
   'list-databases',
-  '列出伺服器上的所有使用者資料庫',
-  {},
+  {
+    title: '列出資料庫',
+    description: '列出伺服器上的所有使用者資料庫'
+  },
   async () => {
     try {
       if (!mssqlManager.isConnected()) {
@@ -109,7 +111,7 @@ server.tool(
       }
 
       const databases = await mssqlManager.getDatabases()
-      
+
       if (databases.length === 0) {
         return {
           content: [
@@ -121,7 +123,7 @@ server.tool(
         }
       }
 
-      const databaseList = databases.map(db => 
+      const databaseList = databases.map(db =>
         `- ${db.name} (建立時間: ${new Date(db.create_date).toLocaleDateString()}, 定序: ${db.collation_name})`
       ).join('\n')
 
@@ -147,11 +149,14 @@ server.tool(
 )
 
 // 工具：切換資料庫
-server.tool(
+server.registerTool(
   'switch-database',
-  '切換到指定的資料庫',
   {
-    database: z.string().describe('要切換到的資料庫名稱'),
+    title: '切換資料庫',
+    description: '切換到指定的資料庫',
+    inputSchema: {
+      database: z.string().describe('要切換到的資料庫名稱'),
+    }
   },
   async ({ database }) => {
     try {
@@ -168,7 +173,7 @@ server.tool(
 
       const sanitizedDatabase = sanitizeDatabaseName(database)
       await mssqlManager.switchDatabase(sanitizedDatabase)
-      
+
       return {
         content: [
           {
@@ -191,10 +196,12 @@ server.tool(
 )
 
 // 工具：列出資料表
-server.tool(
+server.registerTool(
   'list-tables',
-  '列出目前資料庫中的所有資料表',
-  {},
+  {
+    title: '列出資料表',
+    description: '列出目前資料庫中的所有資料表'
+  },
   async () => {
     try {
       if (!mssqlManager.isConnected()) {
@@ -221,7 +228,7 @@ server.tool(
       }
 
       const tables = await mssqlManager.getTables()
-      
+
       if (tables.length === 0) {
         return {
           content: [
@@ -233,7 +240,7 @@ server.tool(
         }
       }
 
-      const tableList = tables.map(table => 
+      const tableList = tables.map(table =>
         `- ${table.table_schema}.${table.table_name} (${table.table_type})`
       ).join('\n')
 
@@ -259,12 +266,15 @@ server.tool(
 )
 
 // 工具：查看資料表結構
-server.tool(
+server.registerTool(
   'describe-table',
-  '查看指定資料表的欄位結構',
   {
-    tableName: z.string().describe('資料表名稱'),
-    schemaName: z.string().optional().default('dbo').describe('結構描述名稱 (預設: dbo)'),
+    title: '查看表格結構',
+    description: '查看指定資料表的欄位結構',
+    inputSchema: {
+      tableName: z.string().describe('資料表名稱'),
+      schemaName: z.string().optional().default('dbo').describe('結構描述名稱 (預設: dbo)'),
+    }
   },
   async ({ tableName, schemaName }) => {
     try {
@@ -293,9 +303,9 @@ server.tool(
 
       const sanitizedTableName = sanitizeTableName(tableName)
       const sanitizedSchemaName = sanitizeTableName(schemaName)
-      
+
       const columns = await mssqlManager.getTableColumns(sanitizedTableName, sanitizedSchemaName)
-      
+
       if (columns.length === 0) {
         return {
           content: [
@@ -314,7 +324,7 @@ server.tool(
         } else if (col.numeric_precision && col.numeric_scale !== null) {
           typeInfo += `(${col.numeric_precision},${col.numeric_scale})`
         }
-        
+
         const nullable = col.is_nullable === 'YES' ? 'NULL' : 'NOT NULL'
         return `- ${col.column_name}: ${typeInfo} ${nullable}`
       }).join('\n')
@@ -341,12 +351,15 @@ server.tool(
 )
 
 // 工具：執行查詢
-server.tool(
+server.registerTool(
   'execute-query',
-  '執行 SQL 查詢語句',
   {
-    query: z.string().describe('要執行的 SQL 查詢語句'),
-    limit: z.number().optional().default(100).describe('結果筆數限制 (預設: 100)'),
+    title: '執行查詢',
+    description: '執行 SQL 查詢語句',
+    inputSchema: {
+      query: z.string().describe('要執行的 SQL 查詢語句'),
+      limit: z.number().optional().default(100).describe('結果筆數限制 (預設: 100)'),
+    }
   },
   async ({ query, limit }) => {
     try {
@@ -378,7 +391,7 @@ server.tool(
       const finalQuery = addTopLimit(query, limit)
 
       const result = await mssqlManager.executeQuery(finalQuery)
-      
+
       if (result.recordset.length === 0) {
         return {
           content: [
@@ -392,7 +405,7 @@ server.tool(
 
       // 使用改進的表格格式化
       const tableOutput = formatResultAsTable(result.recordset, limit)
-      
+
       return {
         content: [
           {
@@ -415,15 +428,17 @@ server.tool(
 )
 
 // 工具：取得連接狀態
-server.tool(
+server.registerTool(
   'connection-status',
-  '檢查目前的資料庫連接狀態',
-  {},
+  {
+    title: '連接狀態',
+    description: '檢查目前的資料庫連接狀態'
+  },
   async () => {
     try {
       const isConnected = mssqlManager.isConnected()
       const currentDb = mssqlManager.getCurrentDatabase()
-      
+
       if (!isConnected) {
         return {
           content: [
@@ -437,7 +452,7 @@ server.tool(
 
       const testResult = await mssqlManager.testConnection()
       const status = testResult ? '已連接且運作正常' : '連接異常'
-      
+
       return {
         content: [
           {
@@ -460,10 +475,12 @@ server.tool(
 )
 
 // 工具：斷開連接
-server.tool(
+server.registerTool(
   'disconnect',
-  '斷開資料庫連接',
-  {},
+  {
+    title: '斷開連接',
+    description: '斷開資料庫連接'
+  },
   async () => {
     try {
       await mssqlManager.disconnect()
@@ -493,23 +510,24 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport()
   await server.connect(transport)
-  console.error('MSSQL MCP 伺服器已啟動，正在監聽 stdio')
+  // 使用 UTF-8 編碼輸出到 stderr
+  process.stderr.write('MSSQL MCP Server started, listening on stdio\n')
 }
 
 // 優雅關閉處理
 process.on('SIGINT', async () => {
-  console.error('接收到 SIGINT，正在關閉伺服器...')
+  process.stderr.write('Received SIGINT, shutting down server...\n')
   await mssqlManager.disconnect()
   process.exit(0)
 })
 
 process.on('SIGTERM', async () => {
-  console.error('接收到 SIGTERM，正在關閉伺服器...')
+  process.stderr.write('Received SIGTERM, shutting down server...\n')
   await mssqlManager.disconnect()
   process.exit(0)
 })
 
 main().catch((error) => {
-  console.error('伺服器啟動失敗:', error)
+  process.stderr.write(`Server startup failed: ${error}\n`)
   process.exit(1)
 })

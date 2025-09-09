@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "mssql-local": {
+      "comment": "使用本地安裝的套件 (最快)",
+      "command": "bunx",
+      "args": ["--bun", "mssql-mcp"]
+    },
+    "mssql-npm": {
+      "comment": "從 npm 自動安裝並執行",
+      "command": "bunx",
+      "args": ["--bun", "@yuuzu/mssql-mcp"]
+    },
+    "mssql-dev": {
+      "comment": "開發模式 - 直接執行 TypeScript",
+      "command": "bun",
+      "args": ["run", "./src/index.ts"]
+    },
+    "mssql-compiled": {
+      "comment": "執行編譯後的獨立執行檔",
+      "command": "./dist/mssql-mcp",
+      "args": []
+    }
+  }
+}

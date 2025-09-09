@@ -2,7 +2,7 @@
 
 ## 專案概述
 
-這是一個使用 TypeScript 開發的 Model Context Protocol (MCP) 伺服器，專門用於與 Microsoft SQL Server 資料庫互動。提供安全的資料庫查詢、瀏覽和管理功能。
+這是一個使用 TypeScript + **Bun** 開發的 Model Context Protocol (MCP) 伺服器，專門用於與 Microsoft SQL Server 資料庫互動。提供安全的資料庫查詢、瀏覽和管理功能，並利用 **Bunx** 實現極速啟動（比 npx 快 100 倍）。
 
 ## 核心功能
 
@@ -47,12 +47,25 @@ claude-commands/      # Claude Code 自訂指令
 
 ## 開發指令
 
+### 🚀 使用 Bun (推薦 - 極速執行)
 ```bash
-npm run build         # 建置 TypeScript 專案
-npm run dev          # 開發模式（建置後立即執行）
-npm start            # 啟動 MCP 伺服器
-npm test             # 測試伺服器啟動
-npm run clean        # 清理建置檔案
+bun install          # 安裝依賴（比 npm 快 10 倍）
+bun run dev          # 開發模式（直接執行 TypeScript）
+bun start            # 啟動 MCP 伺服器
+bun test             # 執行測試
+bun run build        # 編譯為獨立執行檔
+bun run clean        # 清理建置檔案
+
+# 使用 Bunx 執行
+bunx --bun mssql-mcp # 自動安裝並執行
+```
+
+### 傳統 npm 指令（備用）
+```bash
+npm install          # 安裝依賴
+npm run dev          # 開發模式
+npm start            # 啟動伺服器
+npm test             # 測試
 ```
 
 ## Claude Code 整合
@@ -88,9 +101,11 @@ execute-query query="SELECT TOP 10 CustomerID, CompanyName FROM Customers"
 
 ## 設定檔
 
+- `.mcp.json`: Claude Code 自動載入設定（使用 Bunx）
+- `mcp-config-bun.json`: Bun/Bunx 執行模式設定範例
 - `.env.example`: 環境變數範本
-- `mcp-config.json`: MCP 伺服器設定範例
 - `tsconfig.json`: TypeScript 編譯設定
+- `README-BUNX.md`: Bunx 使用指南和效能分析
 
 ## 注意事項
 
