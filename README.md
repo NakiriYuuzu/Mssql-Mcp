@@ -22,17 +22,28 @@ npm install -g bun
 
 ## 🚀 快速開始
 
-### 方法 1: 使用 Bunx (推薦)
+### 方法 1: 使用 Bunx (推薦 - 無需安裝)
 
 ```bash
-# 從 npm 自動安裝並執行
+# 從 npm 自動安裝並執行（最新版本）
 bunx --bun @yuuzu/mssql-mcp
 
 # 或執行本地套件
 bunx --bun mssql-mcp
 ```
 
-### 方法 2: 開發模式
+### 方法 2: 使用 npm/npx
+
+```bash
+# 全域安裝
+npm install -g @yuuzu/mssql-mcp
+mssql-mcp
+
+# 或使用 npx（無需安裝）
+npx @yuuzu/mssql-mcp
+```
+
+### 方法 3: 開發模式
 
 ```bash
 # 克隆專案
@@ -49,7 +60,7 @@ bun run start
 bun run src/index.ts
 ```
 
-### 方法 3: 編譯獨立執行檔
+### 方法 4: 編譯獨立執行檔
 
 ```bash
 # 編譯為跨平台執行檔
@@ -60,6 +71,54 @@ bun run build:exe
 
 # 執行編譯後的檔案
 ./dist/mssql-mcp
+```
+
+## 🔒 安全性與權限控制
+
+### 環境變數權限設定
+
+MSSQL MCP Server 預設為**唯讀模式**，只允許執行 SELECT 查詢。你可以透過環境變數啟用不同的權限層級：
+
+| 環境變數 | 說明 | 預設值 |
+|---------|------|--------|
+| `MSSQL_ALLOW_INSERT` | 允許 INSERT 操作 | `false` |
+| `MSSQL_ALLOW_UPDATE` | 允許 UPDATE 操作 | `false` |
+| `MSSQL_ALLOW_DELETE` | 允許 DELETE 操作 | `false` |
+| `MSSQL_DANGER_MODE` | Danger 模式） | `false` |
+
+### 預設啟動模式
+
+```bash
+# 🟢 安全模式（預設）- 只允許 SELECT
+bun run start
+bunx --bun @yuuzu/mssql-mcp
+
+# 🟡 唯讀模式 - 明確禁止所有寫入
+bun run start:safe
+MSSQL_ALLOW_INSERT=false MSSQL_ALLOW_UPDATE=false MSSQL_ALLOW_DELETE=false bunx --bun @yuuzu/mssql-mcp
+
+# 🟠 寫入模式 - 允許 INSERT 和 UPDATE
+bun run start:write
+MSSQL_ALLOW_INSERT=true MSSQL_ALLOW_UPDATE=true bunx --bun @yuuzu/mssql-mcp
+
+# 🔴 完整模式 - 允許 INSERT、UPDATE 和 DELETE
+bun run start:full
+MSSQL_ALLOW_INSERT=true MSSQL_ALLOW_UPDATE=true MSSQL_ALLOW_DELETE=true bunx --bun @yuuzu/mssql-mcp
+
+# 🔥 Danger 模式 - 允許所有
+bun run start:danger
+MSSQL_DANGER_MODE=true bunx --bun @yuuzu/mssql-mcp
+```
+
+### Windows 環境設定
+
+```powershell
+# PowerShell
+$env:MSSQL_DANGER_MODE="true"
+bunx --bun @yuuzu/mssql-mcp
+
+# CMD
+set MSSQL_DANGER_MODE=true && bunx --bun @yuuzu/mssql-mcp
 ```
 
 ## 🔧 Claude Code 整合
@@ -109,6 +168,57 @@ bun run build:exe
   }
 }
 ```
+
+### 3. 帶權限設定的 MCP 配置
+
+在 Claude Code 的 MCP 配置中加入環境變數來控制權限：
+
+```json
+{
+  "mcpServers": {
+    "mssql-readonly": {
+      "comment": "唯讀模式 - 只允許 SELECT",
+      "command": "bunx",
+      "args": ["--bun", "@yuuzu/mssql-mcp"],
+      "env": {
+        "MSSQL_ALLOW_INSERT": "false",
+        "MSSQL_ALLOW_UPDATE": "false",
+        "MSSQL_ALLOW_DELETE": "false"
+      }
+    },
+    "mssql-write": {
+      "comment": "寫入模式 - 允許 INSERT 和 UPDATE",
+      "command": "bunx",
+      "args": ["--bun", "@yuuzu/mssql-mcp"],
+      "env": {
+        "MSSQL_ALLOW_INSERT": "true",
+        "MSSQL_ALLOW_UPDATE": "true",
+        "MSSQL_ALLOW_DELETE": "false"
+      }
+    },
+    "mssql-full": {
+      "comment": "完整模式 - 允許 INSERT、UPDATE 和 DELETE",
+      "command": "bunx",
+      "args": ["--bun", "@yuuzu/mssql-mcp"],
+      "env": {
+        "MSSQL_ALLOW_INSERT": "true",
+        "MSSQL_ALLOW_UPDATE": "true",
+        "MSSQL_ALLOW_DELETE": "true"
+      }
+    },
+    "mssql-danger": {
+      "comment": "⚠️ DANGER 模式 - 允許大部分操作（慎用！）",
+      "command": "bunx",
+      "args": ["--bun", "@yuuzu/mssql-mcp"],
+      "env": {
+        "MSSQL_DANGER_MODE": "true"
+      }
+    }
+  }
+}
+```
+
+💡 **提示**：你可以在 Claude Code 中同時配置多個不同權限等級的 MSSQL 伺服器，根據需求選擇使用。
 
 ## 📊 效能比較
 

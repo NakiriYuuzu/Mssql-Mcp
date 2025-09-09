@@ -19,6 +19,44 @@
       "comment": "執行編譯後的獨立執行檔",
       "command": "./dist/mssql-mcp",
       "args": []
+    },
+    "mssql-readonly": {
+      "comment": "唯讀模式 - 只允許 SELECT",
+      "command": "bunx",
+      "args": ["--bun", "@yuuzu/mssql-mcp"],
+      "env": {
+        "MSSQL_ALLOW_INSERT": "false",
+        "MSSQL_ALLOW_UPDATE": "false",
+        "MSSQL_ALLOW_DELETE": "false"
+      }
+    },
+    "mssql-write": {
+      "comment": "寫入模式 - 允許 INSERT 和 UPDATE",
+      "command": "bunx",
+      "args": ["--bun", "@yuuzu/mssql-mcp"],
+      "env": {
+        "MSSQL_ALLOW_INSERT": "true",
+        "MSSQL_ALLOW_UPDATE": "true",
+        "MSSQL_ALLOW_DELETE": "false"
+      }
+    },
+    "mssql-full": {
+      "comment": "完整模式 - 允許 INSERT、UPDATE 和 DELETE",
+      "command": "bunx",
+      "args": ["--bun", "@yuuzu/mssql-mcp"],
+      "env": {
+        "MSSQL_ALLOW_INSERT": "true",
+        "MSSQL_ALLOW_UPDATE": "true",
+        "MSSQL_ALLOW_DELETE": "true"
+      }
+    },
+    "mssql-danger": {
+      "comment": "⚠️ DANGER 模式 - 允許大部分操作（慎用！）",
+      "command": "bunx",
+      "args": ["--bun", "@yuuzu/mssql-mcp"],
+      "env": {
+        "MSSQL_DANGER_MODE": "true"
+      }
     }
   }
 }
