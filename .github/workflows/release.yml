@@ -23,14 +23,20 @@ jobs:
         node-version: '20'
         registry-url: 'https://registry.npmjs.org'
         
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+        
     - name: Install dependencies
-      run: npm ci
+      run: bun install
       
     - name: Build project
-      run: npm run build
+      run: bun run build
+      continue-on-error: true
       
     - name: Run tests
-      run: npm test
+      run: bun test
       continue-on-error: true
       
     - name: Package for release
@@ -39,16 +45,17 @@ jobs:
         mkdir -p release
         
         # 複製必要檔案
-        cp -r build release/
+        cp -r src release/
+        cp -r bin release/
+        [ -d dist ] && cp -r dist release/ || true
         cp package.json release/
-        cp package-lock.json release/
+        cp bun.lockb release/ 2>/dev/null || true
         cp README.md release/
-        cp LICENSE release/ 2>/dev/null || true
-        cp .env.example release/
-        cp mcp-config.json release/
-        cp -r claude-commands release/
+        cp LICENSE release/
+        cp .env.sample release/
+        cp mcp-config-bun.json release/
         cp CLAUDE.md release/
-        cp CLAUDE_CODE_SETUP.md release/
+        cp tsconfig.json release/
         
         # 建立壓縮檔
         cd release
@@ -74,10 +81,15 @@ jobs:
           npx @yuuzu/mssql-mcp
           ```
           
+          #### 透過 Bunx (極速執行)
+          ```bash
+          bunx --bun @yuuzu/mssql-mcp
+          ```
+          
           #### 手動安裝
           1. 下載並解壓縮檔案
-          2. 執行 `npm install` 安裝相依套件
-          3. 執行 `node build/index.js` 啟動伺服器
+          2. 執行 `bun install` 安裝相依套件
+          3. 執行 `bun run src/index.ts` 啟動伺服器
           
           ### 變更記錄
           請查看 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)

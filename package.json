@@ -1,19 +1,25 @@
 {
   "name": "@yuuzu/mssql-mcp",
-  "version": "1.0.0",
-  "description": "MSSQL MCP Server for database operations",
+  "version": "1.1.1",
+  "description": "MSSQL MCP Server for database operations - Powered by Bun",
   "type": "module",
-  "main": "build/index.js",
+  "main": "src/index.ts",
   "bin": {
-    "mssql-mcp-server": "./build/index.js"
+    "mssql-mcp": "./bin/mssql-mcp.js",
+    "mssql-mcp-server": "./bin/mssql-mcp.js"
   },
   "scripts": {
-    "build": "tsc && chmod 755 build/index.js",
-    "dev": "tsc && node build/index.js",
-    "start": "node build/index.js",
-    "test": "node test-server.js",
-    "clean": "rm -rf build",
-    "prepublishOnly": "npm run clean && npm run build"
+    "dev": "bun run src/index.ts",
+    "start": "bun run src/index.ts",
+    "start:safe": "MSSQL_ALLOW_INSERT=false MSSQL_ALLOW_UPDATE=false MSSQL_ALLOW_DELETE=false bun run src/index.ts",
+    "start:write": "MSSQL_ALLOW_INSERT=true MSSQL_ALLOW_UPDATE=true MSSQL_ALLOW_DELETE=false bun run src/index.ts",
+    "start:full": "MSSQL_ALLOW_INSERT=true MSSQL_ALLOW_UPDATE=true MSSQL_ALLOW_DELETE=true bun run src/index.ts",
+    "start:danger": "MSSQL_DANGER_MODE=true bun run src/index.ts",
+    "test": "bun test",
+    "build": "bun build --compile ./src/index.ts --outfile dist/mssql-mcp",
+    "build:exe": "bun build --compile ./src/index.ts --target bun --outfile dist/mssql-mcp.exe",
+    "clean": "rm -rf build dist",
+    "prepublishOnly": "bun run clean && bun run build"
   },
   "keywords": ["mcp", "mssql", "database", "sql-server", "model-context-protocol"],
   "author": "Yuuzu",
@@ -30,22 +36,24 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.17.5",
     "mssql": "^11.0.1",
-    "zod": "^3.22.4"
+    "zod": "3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^20.10.0",
-    "@types/mssql": "^9.1.5",
-    "typescript": "^5.3.3"
+    "@types/node": "^24.3.1",
+    "@types/mssql": "^9.1.8",
+    "typescript": "^5.9.2"
   },
   "files": [
-    "build",
-    "claude-commands",
+    "src",
+    "bin",
+    "dist",
     "CLAUDE.md",
-    "CLAUDE_CODE_SETUP.md",
     "README.md",
-    "mcp-config.json",
-    ".env.example"
+    "LICENSE",
+    "mcp-config-bun.json",
+    ".env.sample",
+    "tsconfig.json"
   ]
 }
